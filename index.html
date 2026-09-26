@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff8fb"><title>20/10 · 10B4 · Một lá thư nhỏ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="ambientHearts" aria-hidden="true"></div>
+<main>
+<section class="hero" id="home"><div class="hero-inner"><p class="date">20 · 10 · 2026</p><p class="eyebrow">MỘT ĐIỀU NHỎ, DÀNH RIÊNG CHO BẠN</p><h1>Trong 10B4 có một<br><em>lá thư</em> đang chờ.</h1><p class="lead">Không cần biết trước bên trong có gì. Chỉ cần tìm thấy tên mình.</p><button id="enterBtn" class="main-cta"><span>♥</span> Tìm tên mình <b>↓</b></button></div></section>
+<section class="garden" id="garden"><div class="garden-head"><div><p class="eyebrow">10B4 · 20/10</p><h2>Những cô gái của 10B4.</h2></div><button id="searchBtn" class="search-btn" aria-label="Tìm tên">⌕</button></div>
+<div id="searchWrap" hidden><input id="searchInput" type="search" placeholder="Nhập tên của bạn…" autocomplete="off"></div>
+<button id="teacherBtn" class="teacher-card"><span class="teacher-heart">♥</span><span><small>DÀNH TẶNG CÔ</small><strong>Thưa cô Hằng kính mến</strong></span><b>→</b></button>
+<p id="count" class="count">40 trái tim · mỗi trái tim là một lá thư</p><div id="heartField" class="heart-field"></div></section>
+</main>
+<div id="burstLayer" aria-hidden="true"></div>
+<div id="touchTrail" aria-hidden="true"></div>
+<div id="soundHint" aria-hidden="true">♡</div>
+<aside id="bonusModal" class="bonus-modal" aria-hidden="true">
+  <div class="bonus-card">
+    <button id="bonusClose" class="bonus-close" type="button" aria-label="Đóng">×</button>
+    <div class="bonus-gift">✦</div>
+    <p class="bonus-kicker">MỘT ĐIỀU NHỎ NỮA</p>
+    <h2 id="bonusTitle">Gửi bạn một điều thật riêng.</h2>
+    <p id="bonusText"></p>
+    <span class="bonus-heart">♡</span>
+  </div>
+</aside>
+
+<aside id="finale" class="finale" aria-hidden="true">
+  <div class="finale-card">
+    <span class="finale-kicker">10B4 · 20/10/2026</span>
+    <div class="finale-heart">♥</div>
+    <h2>Bạn đã tìm thấy tất cả.</h2>
+    <p><strong>40 lá thư.</strong><br>Một lớp học.<br>Và rất nhiều điều nhỏ bé đáng nhớ.</p>
+    <button id="finaleClose" type="button">♡ Giữ lại khoảnh khắc này</button>
+  </div>
+</aside>
+<aside id="letter" class="letter" aria-hidden="true"><div class="letter-paper"><button id="closeLetter" class="close-letter">×</button><div class="letter-meta"><span>20 / 10</span><span>10B4</span></div>
+        <div class="letter-progress" aria-hidden="true"><i></i></div><div class="letter-content"><p class="letter-subject" id="letterSubject"></p><h3 id="letterGreeting"></h3><div id="letterBody"></div><p id="letterSign" class="letter-sign"></p></div><span class="paper-heart">♡</span>
+</div>
+<div id="afterLetter" class="after-letter" aria-hidden="true">
+  <div class="after-head"><span class="after-spark">✦</span><div><strong>Đọc xong rồi ♡</strong><small>Gửi lại 10B4 một chút nhé</small></div></div>
+  <div class="after-actions">
+    <button id="bonusBtn" type="button" class="bonus-btn">✦ Mở một điều nhỏ nữa</button>
+    <div class="reaction-row" role="group" aria-label="Phản hồi cho 10B4">
+      <button data-reaction="sweet" type="button">♡ Dễ thương quá</button>
+      <button data-reaction="received" type="button">✦ Mình nhận được rồi</button>
+      <button data-reaction="thanks" type="button">🌷 Cảm ơn 10B4</button>
+    </div>
+  </div>
+</div></aside>
+<script src="data.js"></script><script src="app.js"></script>
+</body></html>
