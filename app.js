@@ -147,7 +147,7 @@ function burst(x,y){
 const farY=Math.max(y,innerHeight-y);
 
 // Kích thước cực rộng: lan gần như toàn viewport
-const wideDiameter=Math.hypot(farX,farY)*5.2;
+const wideDiameter=Math.hypot(farX,farY)*4.8;
 
 // Nhiều vòng hơn để tạo cảm giác mặt hồ bị tác động mạnh
 const ringCount=mobile()?10:12;
@@ -160,7 +160,7 @@ for(let i=0;i<ringCount;i++){
   ring.style.setProperty('--ring-delay',(i*95)+'ms');
 
   // Vòng đầu tiên lớn, rõ và có lực
-  const fraction=i===0?.40:(.44+i*.12);
+  const fraction=i===0?.30:(.34+i*.12);
 
   ring.style.setProperty(
     '--ring-size',
@@ -169,6 +169,8 @@ for(let i=0;i<ringCount;i++){
 
   frag.appendChild(ring);
 }
+
+ 
   // A handful of tiny bubbles rise out of the touch point.
   const bubbles=mobile()?10:14;
   for(let i=0;i<bubbles;i++){
