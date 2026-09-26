@@ -129,46 +129,33 @@ function keySound(ch){
 function haptic(ms=12){try{if(navigator.vibrate)navigator.vibrate(ms)}catch(e){}}
 
 function burst(x,y){
-  // V1's signature moment, rebuilt: the selected heart touches an invisible
-  // water surface. Rings spread first; only a few soft hearts follow.
   burstLayer.innerHTML='';
   burstLayer.classList.add('active','water-mode');
   burstLayer.style.setProperty('--ox',x+'px');
   burstLayer.style.setProperty('--oy',y+'px');
 
   const frag=document.createDocumentFragment();
+
   const glow=document.createElement('div');
   glow.className='water-glow';
   frag.appendChild(glow);
 
-  // Wide concentric ripples: the wave must travel across the whole viewport,
-  // not stop around the tapped heart. Diameter is based on the farthest corner.
   const farX=Math.max(x,innerWidth-x);
-const farY=Math.max(y,innerHeight-y);
+  const farY=Math.max(y,innerHeight-y);
+  const wideDiameter=Math.hypot(farX,farY)*2.18;
+  const ringCount=mobile()?7:8;
 
-// Kích thước cực rộng: lan gần như toàn viewport
-const wideDiameter=Math.hypot(farX,farY)*4.8;
-
-// Nhiều vòng hơn để tạo cảm giác mặt hồ bị tác động mạnh
-const ringCount=mobile()?10:12;
-
-for(let i=0;i<ringCount;i++){
-  const ring=document.createElement('div');
-  ring.className='water-ripple';
-
-  // Các vòng liên tiếp đẩy nhau ra ngoài
-  ring.style.setProperty('--ring-delay',(i*95)+'ms');
-
-  // Vòng đầu tiên lớn, rõ và có lực
-  const fraction=i===0?.30:(.34+i*.12);
-
-  ring.style.setProperty(
-    '--ring-size',
-    Math.max(180,wideDiameter*fraction)+'px'
-  );
-
-  frag.appendChild(ring);
-}
+  for(let i=0;i<ringCount;i++){
+    const ring=document.createElement('div');
+    ring.className='water-ripple';
+    ring.style.setProperty('--ring-delay',(i*105)+'ms');
+    const fraction=i===0?.16:(.26+i*.115);
+    ring.style.setProperty(
+      '--ring-size',
+      Math.max(62,wideDiameter*fraction)+'px'
+    );
+    frag.appendChild(ring);
+  }
 
  
   // A handful of tiny bubbles rise out of the touch point.
