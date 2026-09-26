@@ -1,14 +1,44 @@
+```javascript
 const $ = s => document.querySelector(s);
-const field = $('#heartField'), searchWrap = $('#searchWrap'), searchInput = $('#searchInput');
-const letter = $('#letter'), paper = document.querySelector('.letter-paper'), subject = $('#letterSubject'), greeting = $('#letterGreeting'), body = $('#letterBody'), sign = $('#letterSign');
+
+const field = $('#heartField');
+const searchWrap = $('#searchWrap');
+const searchInput = $('#searchInput');
+
+const letter = $('#letter');
+const paper = document.querySelector('.letter-paper');
+const subject = $('#letterSubject');
+const greeting = $('#letterGreeting');
+const body = $('#letterBody');
+const sign = $('#letterSign');
+
 const burstLayer = $('#burstLayer');
 
-let timers = [], lastScroll = 0, audioCtx = null, typingRAF = null, busy = false, lastTrailAt = 0, secretFound = false, currentLetterData = null;
+let timers = [];
+let lastScroll = 0;
+let audioCtx = null;
+let typingRAF = null;
+let busy = false;
+let lastTrailAt = 0;
+let secretFound = false;
+let currentLetterData = null;
 
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const lowPower = reducedMotion || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 2);
+const reducedMotion =
+  matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-if(lowPower) document.documentElement.classList.add('low-power');
+const lowPower =
+  reducedMotion ||
+  (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+  (navigator.deviceMemory && navigator.deviceMemory <= 2);
+
+if(lowPower){
+  document.documentElement.classList.add('low-power');
+}
+
+
+/* =========================================================
+   BONUS MESSAGES
+========================================================= */
 
 const bonusPool = [
   'Mong hôm nay bạn có một khoảnh khắc rất nhỏ thôi, nhưng đủ để tự nhiên mỉm cười.',
@@ -54,104 +84,23 @@ const bonusPool = [
 ];
 
 function bonusFor(d){
-  if(d.teacher) return 'Mong cô cũng có những khoảng thời gian thật nhẹ nhàng cho riêng mình, với nhiều niềm vui nhỏ sau những ngày bận rộn cùng lớp.';
-  const n = Number(String(d.id).match(/\d+$/)?.[0] || 1) - 1;
-  return bonusPool[Math.max(0,n) % bonusPool.length];
-}
-
-function openBonus(){
-  if(!currentLetterData)return;
-
-  const modal = $('#bonusModal');
-  if(!modal)return;
-
-  $('#bonusText').textContent = bonusFor(currentLetterData);
-  $('#bonusTitle').textContent = currentLetterData.teacher
-    ? 'Một điều nhỏ gửi cô.'
-    : 'Một điều nhỏ dành riêng cho bạn.';
-
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden','false');
-
-  ensureAudio();
-  tone(880,.13,.025,'sine');
-}
-
-function closeBonus(){
-  const m = $('#bonusModal');
-  if(!m)return;
-
-  m.classList.remove('open');
-  m.setAttribute('aria-hidden','true');
-}
-
-function showReplyToast(text){
-  const old = document.querySelector('.reply-toast');
-  if(old)old.remove();
-
-  const t = document.createElement('div');
-  t.className = 'reply-toast';
-  t.textContent = text;
-
-  document.body.appendChild(t);
-
-  requestAnimationFrame(() => t.classList.add('show'));
-
-  later(() => {
-    t.classList.remove('show');
-    later(() => t.remove(),360);
-  },1700);
-}
-
-function react(kind){
-  const msgs = {
-    sweet:'♡ Đã nhận một chút dễ thương.',
-    received:'✦ Đã nhận rồi nhé.',
-    thanks:'🌷 10B4 nhận được lời hồi đáp.'
-  };
-
-  const colors = {
-    sweet:'♡',
-    received:'✦',
-    thanks:'🌷'
-  };
-
-  const layer = $('#touchTrail');
-
-  if(layer && !reducedMotion){
-    for(let i=0;i<6;i++){
-      const h = document.createElement('span');
-
-      h.className = 'trail-heart';
-      h.textContent = colors[kind];
-
-      h.style.setProperty('--x',(innerWidth-45)+'px');
-      h.style.setProperty('--y',(innerHeight-58)+'px');
-      h.style.setProperty('--dx',(Math.random()*60-30)+'px');
-      h.style.setProperty('--dy',(-20-Math.random()*45)+'px');
-      h.style.setProperty('--r',(Math.random()*30-15)+'deg');
-
-      layer.appendChild(h);
-
-      later(() => h.remove(),800);
-    }
+  if(d.teacher){
+    return 'Mong cô cũng có những khoảng thời gian thật nhẹ nhàng cho riêng mình, với nhiều niềm vui nhỏ sau những ngày bận rộn cùng lớp.';
   }
 
-  ensureAudio();
+  const n =
+    Number(String(d.id).match(/\d+$/)?.[0] || 1)-1;
 
-  tone(
-    kind === 'received' ? 760 : kind === 'thanks' ? 620 : 900,
-    .14,
-    .028,
-    'sine'
-  );
-
-  haptic(8);
-  showReplyToast(msgs[kind]);
-  closeReply();
+  return bonusPool[Math.max(0,n)%bonusPool.length];
 }
 
-const performanceCount = (normal,low) => lowPower ? low : normal;
+
+/* =========================================================
+   GENERAL HELPERS
+========================================================= */
+
+const performanceCount = (normal,low) =>
+  lowPower ? low : normal;
 
 const later = (fn,ms) => {
   const t = setTimeout(fn,ms);
@@ -159,159 +108,18 @@ const later = (fn,ms) => {
   return t;
 };
 
-const mobile = () => matchMedia('(max-width:650px)').matches;
+const mobile = () =>
+  matchMedia('(max-width:650px)').matches;
 
-function ambientHearts(){
-  const box = $('#ambientHearts');
-  box.innerHTML = '';
-
-  const count = mobile()
-    ? performanceCount(34,24)
-    : performanceCount(82,54);
-
-  const frag = document.createDocumentFragment();
-
-  for(let i=0;i<count;i++){
-    const h = document.createElement('span');
-
-    h.className = 'ambient-heart';
-    h.textContent = i%6===0 ? '♥' : '♡';
-
-    h.style.left = Math.random()*100+'%';
-    h.style.top = Math.random()*100+'%';
-
-    h.style.setProperty(
-      '--size',
-      (mobile()?8:10)+Math.random()*(mobile()?18:25)+'px'
-    );
-
-    h.style.setProperty(
-      '--dur',
-      (12+Math.random()*14)+'s'
-    );
-
-    h.style.setProperty(
-      '--delay',
-      (-Math.random()*24)+'s'
-    );
-
-    h.style.setProperty(
-      '--opacity',
-      (0.18+Math.random()*0.25).toFixed(2)
-    );
-
-    h.style.setProperty(
-      '--drift',
-      (Math.random()*70-35)+'px'
-    );
-
-    frag.appendChild(h);
-  }
-
-  box.appendChild(frag);
+function clearTimers(){
+  timers.forEach(clearTimeout);
+  timers = [];
 }
 
-const heartSVG = `<svg viewBox="0 0 64 58" focusable="false" aria-hidden="true"><path d="M32 54.5 7.3 30.8C-3.1 20.7 1.1 3.4 15.1 2.2 23.2 1.5 28.6 6.2 32 11.1 35.4 6.2 40.8 1.5 48.9 2.2c14 1.2 18.2 18.5 7.8 28.6L32 54.5Z"/></svg>`;
 
-function positions(n){
-  const m = mobile();
-  const cols = m ? 3 : 5;
-  const rowGap = m ? 104 : 138;
-
-  return Array.from({length:n},(_,i)=>{
-    const row = Math.floor(i/cols);
-    const col = i%cols;
-
-    let x =
-      (col+.5)/cols*100 +
-      (row%2 ? 2.5 : -2.5) +
-      Math.sin(i*2.31)*2.8;
-
-    if(m){
-      x = Math.max(14,Math.min(86,x));
-    }else{
-      x = Math.max(9,Math.min(91,x));
-    }
-
-    return {
-      x,
-      y:18+row*rowGap+Math.sin(i*1.8)*8,
-      dy:Math.cos(i*1.4)*4,
-      delay:-i*.17
-    };
-  });
-}
-
-function render(list){
-  field.innerHTML = '';
-
-  $('#count').textContent =
-    list.length===girls.length
-      ? '40 trái tim · mỗi trái tim là một lá thư'
-      : `${list.length} kết quả`;
-
-  field.style.height =
-    (18 +
-      Math.ceil(list.length/(mobile()?3:5)) *
-      (mobile()?104:138) +
-      70
-    )+'px';
-
-  const ps = positions(list.length);
-  const frag = document.createDocumentFragment();
-
-  list.forEach((d,i)=>{
-    const p = ps[i];
-
-    const b = document.createElement('button');
-
-    b.type = 'button';
-    b.className = 'heart-bubble';
-
-    b.style.left = p.x+'%';
-    b.style.top = p.y+'px';
-
-    b.style.setProperty('--dy',p.dy+'px');
-    b.style.setProperty('--delay',p.delay+'s');
-
-    b.dataset.id = d.id;
-
-    b.setAttribute(
-      'aria-label',
-      'Mở thư của '+d.name
-    );
-
-    b.innerHTML =
-      `<span class="heart-icon">${heartSVG}<i></i></span>` +
-      `<span class="heart-label">${d.name}</span>`;
-
-    b.addEventListener('click',()=>choose(d,b));
-
-    frag.appendChild(b);
-  });
-
-  field.appendChild(frag);
-
-  const oldSecret = field.querySelector('.secret-heart');
-  if(oldSecret)oldSecret.remove();
-
-  if(list.length===girls.length){
-    const s = document.createElement('button');
-
-    s.type = 'button';
-    s.className = 'secret-heart';
-    s.textContent = '♡';
-
-    s.setAttribute(
-      'aria-label',
-      'Một điều nhỏ bí mật'
-    );
-
-    s.addEventListener('click',findSecret);
-
-    field.appendChild(s);
-  }
-}
+/* =========================================================
+   AUDIO
+========================================================= */
 
 function ensureAudio(){
   try{
@@ -325,13 +133,21 @@ function ensureAudio(){
     }
 
     return audioCtx;
+
   }catch(e){
     return null;
   }
 }
 
-function tone(freq,dur=.08,gain=.04,type='sine',delay=0){
+function tone(
+  freq,
+  dur=.08,
+  gain=.04,
+  type='sine',
+  delay=0
+){
   const a = ensureAudio();
+
   if(!a)return;
 
   const now = a.currentTime+delay;
@@ -358,37 +174,47 @@ function tone(freq,dur=.08,gain=.04,type='sine',delay=0){
   g.connect(a.destination);
 
   o.start(now);
-  o.stop(now+dur+.015);
+  o.stop(now+dur+.02);
 }
 
 function openingSound(){
-  [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
-    tone(
-      f,
-      .22,
-      .045,
-      i===3 ? 'sine' : 'triangle',
-      i*.055
-    );
-  });
+
+  [261.63,329.63,392,523.25,659.25,783.99]
+    .forEach((f,i)=>{
+      tone(
+        f,
+        .28,
+        .045,
+        i%2 ? 'triangle' : 'sine',
+        i*.065
+      );
+    });
 }
 
 function keySound(ch){
+
   if(!ch.trim())return;
 
-  const punct = /[.,!?;:—–…]/.test(ch);
+  const punct =
+    /[.,!?;:—–…]/.test(ch);
 
   tone(
-    punct ? 510 : 650+Math.random()*170,
+    punct
+      ? 510
+      : 650+Math.random()*170,
+
     punct ? .045 : .055,
+
     mobile()
       ? (punct ? .018 : .035)
       : (punct ? .012 : .024),
+
     'triangle'
   );
 }
 
 function haptic(ms=12){
+
   try{
     if(navigator.vibrate){
       navigator.vibrate(ms);
@@ -396,12 +222,293 @@ function haptic(ms=12){
   }catch(e){}
 }
 
-function burst(x,y){
-  // V1's signature moment, rebuilt:
-  // the selected heart touches an invisible water surface.
-  // Rings spread first; only a few soft hearts follow.
 
-  burstLayer.innerHTML = '';
+/* =========================================================
+   AMBIENT HEARTS
+========================================================= */
+
+function ambientHearts(){
+
+  const box = $('#ambientHearts');
+
+  if(!box)return;
+
+  box.innerHTML = '';
+
+  const count =
+    mobile()
+      ? performanceCount(30,18)
+      : performanceCount(68,40);
+
+  const frag =
+    document.createDocumentFragment();
+
+  for(let i=0;i<count;i++){
+
+    const h =
+      document.createElement('span');
+
+    h.className = 'ambient-heart';
+
+    h.textContent =
+      i%7===0 ? '♥' : '♡';
+
+    h.style.left =
+      Math.random()*100+'%';
+
+    h.style.top =
+      Math.random()*100+'%';
+
+    h.style.setProperty(
+      '--size',
+      (mobile()?8:10)+
+      Math.random()*(mobile()?18:25)+'px'
+    );
+
+    h.style.setProperty(
+      '--dur',
+      (12+Math.random()*14)+'s'
+    );
+
+    h.style.setProperty(
+      '--delay',
+      (-Math.random()*24)+'s'
+    );
+
+    h.style.setProperty(
+      '--opacity',
+      (.15+Math.random()*.23).toFixed(2)
+    );
+
+    h.style.setProperty(
+      '--drift',
+      (Math.random()*70-35)+'px'
+    );
+
+    frag.appendChild(h);
+  }
+
+  box.appendChild(frag);
+}
+
+
+/* =========================================================
+   HEART SVG
+========================================================= */
+
+const heartSVG = `
+<svg
+  viewBox="0 0 64 58"
+  focusable="false"
+  aria-hidden="true">
+  <path d="
+    M32 54.5
+    7.3 30.8
+    C-3.1 20.7 1.1 3.4 15.1 2.2
+    C23.2 1.5 28.6 6.2 32 11.1
+    C35.4 6.2 40.8 1.5 48.9 2.2
+    c14 1.2 18.2 18.5 7.8 28.6
+    L32 54.5Z
+  "/>
+</svg>`;
+
+
+/* =========================================================
+   HEART POSITIONS
+========================================================= */
+
+function positions(n){
+
+  const m = mobile();
+
+  const cols = m ? 3 : 5;
+  const rowGap = m ? 104 : 138;
+
+  return Array.from(
+    {length:n},
+    (_,i)=>{
+
+      const row =
+        Math.floor(i/cols);
+
+      const col =
+        i%cols;
+
+      let x =
+        (col+.5)/cols*100+
+        (row%2 ? 2.5 : -2.5)+
+        Math.sin(i*2.31)*2.8;
+
+      if(m){
+        x = Math.max(
+          14,
+          Math.min(86,x)
+        );
+      }else{
+        x = Math.max(
+          9,
+          Math.min(91,x)
+        );
+      }
+
+      return {
+        x,
+        y:
+          18+
+          row*rowGap+
+          Math.sin(i*1.8)*8,
+
+        dy:
+          Math.cos(i*1.4)*4,
+
+        delay:
+          -i*.17
+      };
+    }
+  );
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render(list){
+
+  field.innerHTML = '';
+
+  $('#count').textContent =
+    list.length===girls.length
+      ? '40 trái tim · mỗi trái tim là một lá thư'
+      : `${list.length} kết quả`;
+
+  field.style.height =
+    (
+      18+
+      Math.ceil(
+        list.length/(mobile()?3:5)
+      )*
+      (mobile()?104:138)+
+      70
+    )+'px';
+
+  const ps =
+    positions(list.length);
+
+  const frag =
+    document.createDocumentFragment();
+
+  list.forEach((d,i)=>{
+
+    const p = ps[i];
+
+    const b =
+      document.createElement('button');
+
+    b.type = 'button';
+
+    b.className =
+      'heart-bubble';
+
+    b.style.left =
+      p.x+'%';
+
+    b.style.top =
+      p.y+'px';
+
+    b.style.setProperty(
+      '--dy',
+      p.dy+'px'
+    );
+
+    b.style.setProperty(
+      '--delay',
+      p.delay+'s'
+    );
+
+    b.dataset.id = d.id;
+
+    b.setAttribute(
+      'aria-label',
+      'Mở thư của '+d.name
+    );
+
+    b.innerHTML =
+      `<span class="heart-icon">
+        ${heartSVG}<i></i>
+      </span>
+      <span class="heart-label">
+        ${d.name}
+      </span>`;
+
+    b.addEventListener(
+      'click',
+      ()=>choose(d,b)
+    );
+
+    frag.appendChild(b);
+  });
+
+  field.appendChild(frag);
+
+  const oldSecret =
+    field.querySelector('.secret-heart');
+
+  if(oldSecret){
+    oldSecret.remove();
+  }
+
+  if(list.length===girls.length){
+
+    const s =
+      document.createElement('button');
+
+    s.type='button';
+
+    s.className =
+      'secret-heart';
+
+    s.textContent='♡';
+
+    s.setAttribute(
+      'aria-label',
+      'Một điều nhỏ bí mật'
+    );
+
+    s.addEventListener(
+      'click',
+      findSecret
+    );
+
+    field.appendChild(s);
+  }
+}
+
+
+/* =========================================================
+   THE BIG CINEMATIC WAVE
+========================================================= */
+
+function burst(x,y){
+
+  /*
+    OLD PROBLEM:
+    - ripple có nhưng cảm giác nhỏ
+    - nhiều vòng nhưng thiếu "sự kiện"
+    - bubble bay quanh tâm rồi biến mất
+    - thư xuất hiện quá nhanh
+
+    NEW:
+    1. flash tại điểm chạm
+    2. shockwave cực lớn
+    3. nhiều lớp glow
+    4. particles bị đẩy ra
+    5. trái tim đi theo sóng
+    6. màn hình rung nhẹ
+    7. rồi mới mở thư
+  */
+
+  burstLayer.innerHTML='';
 
   burstLayer.classList.add(
     'active',
@@ -418,210 +525,463 @@ function burst(x,y){
     y+'px'
   );
 
-  const frag = document.createDocumentFragment();
+  /*
+    Chúng ta dùng chính CSS hiện tại
+    làm nền, còn JS tạo các lớp phụ
+    bằng style trực tiếp.
+  */
 
-  const glow = document.createElement('div');
-  glow.className = 'water-glow';
+  const frag =
+    document.createDocumentFragment();
 
-  frag.appendChild(glow);
 
-  // Wide concentric ripples.
-  // The wave travels across the whole viewport,
-  // not just around the tapped heart.
+  /* -------------------------------------
+     1. CORE FLASH
+  ------------------------------------- */
 
-  const farX = Math.max(
-    x,
-    innerWidth-x
-  );
+  const flash =
+    document.createElement('div');
 
-  const farY = Math.max(
-    y,
-    innerHeight-y
-  );
+  flash.style.position='fixed';
+  flash.style.left=x+'px';
+  flash.style.top=y+'px';
+  flash.style.width='18px';
+  flash.style.height='18px';
+  flash.style.borderRadius='50%';
+  flash.style.pointerEvents='none';
+  flash.style.zIndex='9999';
 
-  const wideDiameter =
-    Math.hypot(farX,farY)*5.2;
+  flash.style.background=
+    'radial-gradient(circle,rgba(255,255,255,.98) 0%,rgba(255,205,225,.9) 25%,rgba(255,120,180,.35) 55%,transparent 75%)';
 
-  // FIX:
-  // The previous version had:
-  // const ringCount=mobile()?9.8;
-  //
-  // That is invalid JavaScript because the conditional
-  // operator is missing its ":" branch.
+  flash.style.boxShadow=
+    '0 0 18px rgba(255,255,255,.95),' +
+    '0 0 55px rgba(255,100,170,.75),' +
+    '0 0 110px rgba(255,120,190,.48)';
 
-  // Keep the ripple large:
-  // 10 rings on mobile, 11 on desktop.
-  const ringCount = mobile() ? 10 : 11;
+  flash.style.transform=
+    'translate(-50%,-50%) scale(.3)';
+
+  flash.style.transition=
+    'transform .42s cubic-bezier(.16,1,.3,1),' +
+    'opacity .55s ease';
+
+  frag.appendChild(flash);
+
+
+  /* -------------------------------------
+     2. GIANT HALO
+  ------------------------------------- */
+
+  const halo =
+    document.createElement('div');
+
+  halo.style.position='fixed';
+  halo.style.left=x+'px';
+  halo.style.top=y+'px';
+  halo.style.width='10px';
+  halo.style.height='10px';
+  halo.style.borderRadius='50%';
+  halo.style.pointerEvents='none';
+  halo.style.zIndex='9997';
+
+  halo.style.background=
+    'radial-gradient(circle,' +
+    'rgba(255,255,255,.62) 0%,' +
+    'rgba(255,180,215,.35) 20%,' +
+    'rgba(255,130,190,.15) 42%,' +
+    'transparent 72%)';
+
+  halo.style.transform=
+    'translate(-50%,-50%) scale(.5)';
+
+  halo.style.transition=
+    'transform 1.45s cubic-bezier(.12,.75,.18,1),' +
+    'opacity 1.5s ease';
+
+  frag.appendChild(halo);
+
+
+  /* -------------------------------------
+     3. HUGE RINGS
+  ------------------------------------- */
+
+  const farX =
+    Math.max(
+      x,
+      innerWidth-x
+    );
+
+  const farY =
+    Math.max(
+      y,
+      innerHeight-y
+    );
+
+  const maxRadius =
+    Math.hypot(farX,farY)*1.55;
+
+  const ringCount =
+    mobile() ? 7 : 9;
 
   for(let i=0;i<ringCount;i++){
-    const ring = document.createElement('div');
 
-    ring.className = 'water-ripple';
+    const ring =
+      document.createElement('div');
 
-    ring.style.setProperty(
-      '--ring-delay',
-      (i*85)+'ms'
-    );
+    ring.style.position='fixed';
 
-    // The first wave is deliberately stronger.
-    // Later waves keep expanding beyond the viewport.
+    ring.style.left=x+'px';
+    ring.style.top=y+'px';
 
-    const fraction =
-      i===0
-        ? .30
-        : (.40+i*.15);
+    ring.style.width='30px';
+    ring.style.height='30px';
 
-    ring.style.setProperty(
-      '--ring-size',
-      Math.max(
-        220,
-        wideDiameter*fraction
-      )+'px'
-    );
+    ring.style.borderRadius='50%';
+
+    ring.style.pointerEvents='none';
+
+    ring.style.zIndex='9996';
+
+    const strong =
+      i===0;
+
+    ring.style.border =
+      strong
+        ? '3px solid rgba(255,255,255,.95)'
+        : '2px solid rgba(255,165,205,.48)';
+
+    ring.style.boxShadow =
+      strong
+        ? '0 0 20px rgba(255,255,255,.9),' +
+          '0 0 50px rgba(255,100,170,.7)'
+        : '0 0 22px rgba(255,120,180,.35)';
+
+    ring.style.transform =
+      'translate(-50%,-50%) scale(.1)';
+
+    ring.style.opacity =
+      strong ? '1' : '.78';
+
+    ring.style.transition =
+      `transform ${1.55+i*.14}s cubic-bezier(.08,.72,.16,1) ${i*.105}s,`+
+      `opacity ${1.45+i*.12}s ease ${i*.105}s`;
 
     frag.appendChild(ring);
+
+    later(()=>{
+
+      ring.style.transform =
+        `translate(-50%,-50%) scale(${Math.max(
+          12,
+          maxRadius/15
+        )*(1+i*.17)})`;
+
+      ring.style.opacity =
+        i===0 ? '0' : '.04';
+
+    },20);
   }
 
-  // A handful of tiny bubbles rise out of the touch point.
-  const bubbles = mobile() ? 20 : 25;
 
-  for(let i=0;i<bubbles;i++){
-    const b = document.createElement('span');
+  /* -------------------------------------
+     4. PARTICLES
+  ------------------------------------- */
 
-    b.className = 'water-bubble';
+  const particleCount =
+    mobile() ? 24 : 42;
 
-    const a = Math.random()*Math.PI*2;
+  for(let i=0;i<particleCount;i++){
 
-    const dist =
-      24+
-      Math.random()*(mobile()?200:260);
+    const p =
+      document.createElement('span');
 
-    b.style.setProperty(
-      '--bx',
-      Math.cos(a)*dist+'px'
-    );
+    p.textContent =
+      i%8===0 ? '✦' :
+      i%5===0 ? '·' :
+      '•';
 
-    b.style.setProperty(
-      '--by',
-      Math.sin(a)*dist -
-      24 -
-      Math.random()*34 +
-      'px'
-    );
+    p.style.position='fixed';
+    p.style.left=x+'px';
+    p.style.top=y+'px';
 
-    b.style.setProperty(
-      '--bs',
-      (3+Math.random()*(mobile()?7:10))+'px'
-    );
+    p.style.pointerEvents='none';
 
-    b.style.setProperty(
-      '--bd',
-      Math.random()*200+'ms'
-    );
+    p.style.zIndex='10000';
 
-    frag.appendChild(b);
+    p.style.fontSize =
+      (2+Math.random()*(mobile()?5:8))+'px';
+
+    p.style.color =
+      i%4===0
+        ? 'rgba(255,255,255,.95)'
+        : 'rgba(255,175,215,.8)';
+
+    p.style.textShadow=
+      '0 0 10px rgba(255,120,190,.9)';
+
+    p.style.transform=
+      'translate(-50%,-50%) scale(.2)';
+
+    p.style.opacity='0';
+
+    frag.appendChild(p);
+
+    const angle =
+      Math.random()*Math.PI*2;
+
+    const distance =
+      maxRadius*
+      (.35+Math.random()*.55);
+
+    const dx =
+      Math.cos(angle)*distance;
+
+    const dy =
+      Math.sin(angle)*distance;
+
+    later(()=>{
+
+      p.style.opacity=
+        String(.35+Math.random()*.6);
+
+      p.style.transition=
+        'transform 1.5s cubic-bezier(.12,.8,.2,1),' +
+        'opacity 1.7s ease';
+
+      p.style.transform=
+        `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`;
+
+    },220+Math.random()*450);
+
+    later(()=>{
+      p.style.opacity='0';
+    },1250+Math.random()*500);
   }
 
-  // Keep a light trace of the heart language,
-  // but let the water do the opening.
 
-  const hearts = mobile() ? 10 : 16;
+  /* -------------------------------------
+     5. HEARTS FOLLOW THE WAVE
+  ------------------------------------- */
 
-  for(let i=0;i<hearts;i++){
-    const h = document.createElement('span');
+  const heartCount =
+    mobile() ? 10 : 17;
 
-    h.className = 'burst-heart soft-heart';
+  for(let i=0;i<heartCount;i++){
+
+    const h =
+      document.createElement('span');
 
     h.textContent =
-      i%5===0 ? '♥' : '♡';
+      i%4===0 ? '♥' : '♡';
 
-    const a =
-      Math.PI*2*(i/hearts) +
-      (Math.random()-.6)*.36;
+    h.style.position='fixed';
 
-    const dist =
-      (mobile()?42:58) +
-      Math.random()*(mobile()?100:170);
+    h.style.left=x+'px';
+    h.style.top=y+'px';
 
-    h.style.setProperty(
-      '--tx',
-      Math.cos(a)*dist+'px'
-    );
+    h.style.zIndex='10001';
 
-    h.style.setProperty(
-      '--ty',
-      Math.sin(a)*dist+'px'
-    );
+    h.style.pointerEvents='none';
 
-    h.style.setProperty(
-      '--rot',
-      (Math.random()*38-19)+'deg'
-    );
+    h.style.fontSize =
+      (8+Math.random()*12)+'px';
 
-    h.style.setProperty(
-      '--size',
-      (mobile()?7:8) +
-      Math.random()*(mobile()?8:11) +
-      'px'
-    );
+    h.style.color =
+      i%3===0
+        ? 'rgba(255,255,255,.95)'
+        : 'rgba(255,170,210,.82)';
 
-    h.style.setProperty(
-      '--delay',
-      (420+Math.random()*250)+'ms'
-    );
+    h.style.textShadow=
+      '0 0 14px rgba(255,100,180,.8)';
 
-    h.style.setProperty(
-      '--dur',
-      (1.25+Math.random()*.50)+'s'
-    );
+    h.style.transform=
+      'translate(-50%,-50%) scale(.3)';
+
+    h.style.opacity='0';
 
     frag.appendChild(h);
+
+    const angle =
+      (Math.PI*2*i/heartCount)+
+      (Math.random()-.5)*.5;
+
+    const distance =
+      maxRadius*
+      (.18+Math.random()*.45);
+
+    const dx =
+      Math.cos(angle)*distance;
+
+    const dy =
+      Math.sin(angle)*distance;
+
+    later(()=>{
+
+      h.style.opacity='1';
+
+      h.style.transition=
+        'transform 1.75s cubic-bezier(.1,.8,.18,1),' +
+        'opacity 1.8s ease';
+
+      h.style.transform=
+        `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) rotate(${Math.random()*80-40}deg) scale(1)`;
+
+    },350+Math.random()*350);
+
+    later(()=>{
+      h.style.opacity='0';
+    },1500+Math.random()*500);
   }
+
+
+  /* -------------------------------------
+     6. LIGHT SWEEP
+  ------------------------------------- */
+
+  const sweep =
+    document.createElement('div');
+
+  sweep.style.position='fixed';
+  sweep.style.inset='-40%';
+
+  sweep.style.pointerEvents='none';
+
+  sweep.style.zIndex='9995';
+
+  sweep.style.background=
+    'radial-gradient(circle at '+(
+      x/innerWidth*100
+    )+'% '+(
+      y/innerHeight*100
+    )+'%,rgba(255,210,230,.34),transparent 27%)';
+
+  sweep.style.opacity='0';
+
+  sweep.style.transition=
+    'opacity .45s ease,transform 1.7s ease';
+
+  frag.appendChild(sweep);
+
 
   burstLayer.appendChild(frag);
 
+
+  /* -------------------------------------
+     START THE WHOLE EVENT
+  ------------------------------------- */
+
+  requestAnimationFrame(()=>{
+
+    flash.style.transform=
+      'translate(-50%,-50%) scale(14)';
+
+    flash.style.opacity='0';
+
+    halo.style.transform=
+      'translate(-50%,-50%) scale(125)';
+
+    halo.style.opacity='0';
+
+    sweep.style.opacity='1';
+    sweep.style.transform='scale(1.7)';
+
+  });
+
+
+  /* -------------------------------------
+     CAMERA-LIKE MICRO SHAKE
+  ------------------------------------- */
+
+  if(!reducedMotion){
+
+    document.documentElement.animate(
+      [
+        {
+          transform:'translate3d(0,0,0)'
+        },
+        {
+          transform:'translate3d(-3px,2px,0)'
+        },
+        {
+          transform:'translate3d(3px,-2px,0)'
+        },
+        {
+          transform:'translate3d(-2px,-1px,0)'
+        },
+        {
+          transform:'translate3d(0,0,0)'
+        }
+      ],
+      {
+        duration:560,
+        easing:'cubic-bezier(.2,.8,.2,1)'
+      }
+    );
+  }
+
+
+  /* -------------------------------------
+     CLEANUP
+  ------------------------------------- */
+
   later(()=>{
+
     burstLayer.classList.remove(
       'active',
       'water-mode'
     );
 
-    burstLayer.innerHTML = '';
-  },2500);
+    burstLayer.innerHTML='';
+
+  },3100);
 }
 
+
+/* =========================================================
+   LETTER TYPING
+========================================================= */
+
 function clearTyping(){
+
   if(typingRAF){
-    cancelAnimationFrame(typingRAF);
-    typingRAF = null;
+
+    cancelAnimationFrame(
+      typingRAF
+    );
+
+    typingRAF=null;
   }
 
   timers.forEach(clearTimeout);
-  timers = [];
+
+  timers=[];
 
   document
     .querySelectorAll('.letter-progress i')
-    .forEach(x=>x.style.width='0%');
+    .forEach(
+      x=>x.style.width='0%'
+    );
 }
 
-// A deliberately cinematic reveal:
-// still genuinely character-by-character,
-// but the total duration stays predictable on phones.
-
 function typeLetter(d){
-  greeting.textContent = '';
-  body.innerHTML = '';
+
+  greeting.textContent='';
+  body.innerHTML='';
+
   sign.classList.remove('show');
 
   const progress =
-    document.querySelector('.letter-progress i');
+    document.querySelector(
+      '.letter-progress i'
+    );
 
-  const paras = [
+  const paras=[
     d.greeting,
     ...d.paragraphs
   ];
 
-  const nodes = [
+  const nodes=[
     greeting,
     ...d.paragraphs.map(
       ()=>document.createElement('p')
@@ -629,18 +989,29 @@ function typeLetter(d){
   ];
 
   d.paragraphs.forEach((_,i)=>{
-    nodes[i+1].className = 'letter-paragraph';
-    body.appendChild(nodes[i+1]);
+
+    nodes[i+1].className =
+      'letter-paragraph';
+
+    body.appendChild(
+      nodes[i+1]
+    );
   });
 
   const texts =
-    paras.map(x=>String(x||''));
+    paras.map(
+      x=>String(x||'')
+    );
 
   const totalDuration =
-    mobile() ? 18000 : 16500;
+    mobile()
+      ? 18000
+      : 16500;
 
   const paragraphGap =
-    mobile() ? 620 : 520;
+    mobile()
+      ? 620
+      : 520;
 
   const totalGaps =
     paragraphGap*3;
@@ -648,16 +1019,25 @@ function typeLetter(d){
   const typingDuration =
     totalDuration-totalGaps;
 
-  let elapsed = 0;
-  let last = performance.now();
-  let lastSound = 0;
-  let soundIndex = 0;
-  let lastVisible = 0;
+  let elapsed=0;
 
-  const flat = [];
+  let last=
+    performance.now();
+
+  let lastSound=0;
+
+  let lastVisible=0;
+
+  const flat=[];
 
   texts.forEach((text,pi)=>{
-    for(let ci=0;ci<text.length;ci++){
+
+    for(
+      let ci=0;
+      ci<text.length;
+      ci++
+    ){
+
       flat.push({
         pi,
         ci,
@@ -666,93 +1046,161 @@ function typeLetter(d){
     }
   });
 
-  // Variable rhythm:
-  // punctuation creates tiny local pauses
-  // while the overall clock remains fixed.
+  const weightAt=item=>{
 
-  const weightAt = item=>{
-    const ch = item.text[item.ci];
+    const ch=
+      item.text[item.ci];
 
-    if(/[.!?…]/.test(ch)){
-      return 2.0;
-    }
+    if(/[.!?…]/.test(ch))
+      return 2;
 
-    if(/[,;:—–]/.test(ch)){
+    if(/[,;:—–]/.test(ch))
       return 1.35;
-    }
 
-    if(ch===' '){
+    if(ch===' ')
       return .42;
-    }
 
     return 1;
   };
 
-  const weights =
+  const weights=
     flat.map(weightAt);
 
-  const weightTotal =
+  const weightTotal=
     weights.reduce(
       (a,b)=>a+b,
       0
     );
 
-  // Map elapsed time to character position,
-  // then reveal any characters that have arrived.
+  const step=now=>{
 
-  const step = now=>{
-    const dt =
-      Math.min(80,now-last);
-
-    last = now;
-    elapsed += dt;
-
-    const typingElapsed =
-      Math.max(
-        0,
-        elapsed-totalGaps*0.12
+    const dt=
+      Math.min(
+        80,
+        now-last
       );
 
-    const t =
+    last=now;
+
+    elapsed+=dt;
+
+    const typingElapsed=
+      Math.max(
+        0,
+        elapsed-totalGaps*.12
+      );
+
+    const t=
       Math.min(
         1,
         typingElapsed/typingDuration
       );
 
-    const eased =
+    const eased=
       t<.5
         ? 2*t*t
-        : 1-Math.pow(-2*t+2,2)/2;
+        : 1-
+          Math.pow(
+            -2*t+2,
+            2
+          )/2;
 
-    const targetWeight =
+    const targetWeight=
       eased*weightTotal;
 
-    let acc = 0;
-    let targetIndex = 0;
+    let acc=0;
+    let targetIndex=0;
 
-    for(let i=0;i<weights.length;i++){
-      acc += weights[i];
+    for(
+      let i=0;
+      i<weights.length;
+      i++
+    ){
+
+      acc+=weights[i];
 
       if(acc>=targetWeight){
-        targetIndex = i+1;
+
+        targetIndex=i+1;
         break;
       }
 
-      targetIndex = weights.length;
+      targetIndex=
+        weights.length;
     }
 
-    while(lastVisible<targetIndex){
-      const item =
+    while(
+      lastVisible<targetIndex
+    ){
+
+      const item=
         flat[lastVisible++];
 
-      nodes[item.pi].append(
-        document.createTextNode(
-          item.text[item.ci]
-        )
-      );
-
-      const ch =
+      const ch=
         item.text[item.ci];
+
+      const node=
+        nodes[item.pi];
+
+      /*
+        Chữ mới xuất hiện:
+        - hơi mờ
+        - hơi phóng to
+        - sáng nhẹ
+        - rồi trở về bình thường
+      */
+
+      if(ch.trim()){
+
+        const span=
+          document.createElement(
+            'span'
+          );
+
+        span.textContent=ch;
+
+        span.style.display=
+          'inline-block';
+
+        span.style.opacity='0';
+
+        span.style.transform=
+          'translateY(2px) scale(1.045)';
+
+        span.style.filter=
+          'blur(2px)';
+
+        span.style.textShadow=
+          '0 0 12px rgba(255,150,190,.45)';
+
+        span.style.transition=
+          'opacity .18s ease,'+
+          'transform .28s cubic-bezier(.2,.8,.2,1),'+
+          'filter .28s ease,'+
+          'text-shadow .4s ease';
+
+        node.appendChild(span);
+
+        requestAnimationFrame(()=>{
+
+          span.style.opacity='1';
+
+          span.style.transform=
+            'translateY(0) scale(1)';
+
+          span.style.filter=
+            'blur(0)';
+
+          span.style.textShadow=
+            '0 0 0 transparent';
+        });
+
+      }else{
+
+        node.appendChild(
+          document.createTextNode(' ')
+        );
+      }
 
       if(
         ch.trim() &&
@@ -761,134 +1209,114 @@ function typeLetter(d){
           /[.!?]/.test(ch)
         )
       ){
+
         keySound(ch);
-        lastSound = lastVisible;
-        soundIndex++;
+
+        lastSound=
+          lastVisible;
       }
     }
 
     if(progress){
-      progress.style.width =
+
+      progress.style.width=
         Math.round(
-          Math.min(100,t*100)
+          Math.min(
+            100,
+            t*100
+          )
         )+'%';
-    }
-
-    // Let each finished paragraph settle
-    // with a tiny ink glow.
-
-    if(lastVisible>0){
-      let cumulative = 0;
-
-      texts.forEach((text,i)=>{
-        cumulative += text.length;
-
-        if(
-          lastVisible>=cumulative &&
-          nodes[i].classList
-        ){
-          nodes[i].classList.add('settled');
-        }
-      });
     }
 
     if(t>=1){
 
       nodes.forEach((n,i)=>{
-        if(i===0){
-          n.textContent = texts[0];
-        }else{
-          n.textContent = texts[i];
-        }
 
-        n.classList.remove('typing');
-        n.classList.add('settled');
+        n.textContent=
+          texts[i];
+
+        n.classList.remove(
+          'typing'
+        );
+
+        n.classList.add(
+          'settled'
+        );
       });
 
       if(progress){
-        progress.style.width = '100%';
+        progress.style.width='100%';
       }
 
       later(()=>{
+
         sign.classList.add('show');
-        paper.classList.add('finished');
-        letter.classList.add('finished');
+
+        paper.classList.add(
+          'finished'
+        );
+
+        letter.classList.add(
+          'finished'
+        );
+
         showAfterLetter();
+
         tone(
           880,
           .16,
           .028,
           'sine'
         );
+
       },180);
 
-      typingRAF = null;
+      typingRAF=null;
+
       return;
     }
 
-    typingRAF =
+    typingRAF=
       requestAnimationFrame(step);
   };
 
-  nodes[0].classList.add('typing');
+  nodes[0].classList.add(
+    'typing'
+  );
 
-  typingRAF =
+  typingRAF=
     requestAnimationFrame(step);
 }
 
-function closeReply(){
-  const el = $('#afterLetter');
 
-  if(el){
-    el.classList.remove('show');
-    el.setAttribute(
-      'aria-hidden',
-      'true'
-    );
-  }
-}
-
-function showAfterLetter(){
-  const el = $('#afterLetter');
-
-  if(el){
-    el.classList.add('show');
-    el.setAttribute(
-      'aria-hidden',
-      'false'
-    );
-  }
-}
-
-function hideAfterLetter(){
-  const el = $('#afterLetter');
-
-  if(el){
-    el.classList.remove('show');
-    el.setAttribute(
-      'aria-hidden',
-      'true'
-    );
-  }
-}
+/* =========================================================
+   LETTER
+========================================================= */
 
 function show(d){
+
   clearTyping();
 
-  currentLetterData = d;
+  currentLetterData=d;
 
-  subject.textContent = d.subject;
+  subject.textContent=
+    d.subject;
 
-  paper.classList.remove('finished');
+  paper.classList.remove(
+    'finished'
+  );
 
-  greeting.textContent = '';
-  body.innerHTML = '';
+  greeting.textContent='';
 
-  sign.textContent =
+  body.innerHTML='';
+
+  sign.textContent=
     d.sign ||
     'Từ 10B4, với một lời chúc nhỏ ♡';
 
-  sign.classList.remove('show');
+  sign.classList.remove(
+    'show'
+  );
 
   letter.classList.toggle(
     'teacher-letter',
@@ -905,9 +1333,12 @@ function show(d){
   );
 
   hideAfterLetter();
+
   closeReply();
 
-  letter.classList.add('open');
+  letter.classList.add(
+    'open'
+  );
 
   letter.setAttribute(
     'aria-hidden',
@@ -920,52 +1351,161 @@ function show(d){
   );
 }
 
+
+/* =========================================================
+   CHOOSE HEART
+========================================================= */
+
 function choose(d,b){
+
   if(busy)return;
 
-  busy = true;
-  lastScroll = scrollY;
+  busy=true;
+
+  lastScroll=
+    scrollY;
 
   ensureAudio();
+
   openingSound();
-  haptic(14);
+
+  haptic(18);
 
   document
-    .querySelectorAll('.heart-bubble')
+    .querySelectorAll(
+      '.heart-bubble'
+    )
     .forEach(x=>{
-      x.classList.remove('selected');
+      x.classList.remove(
+        'selected'
+      );
     });
 
-  b.classList.add('selected');
-
-  field.classList.add('choosing');
-
-  const r =
-    b.getBoundingClientRect();
-
-  burst(
-    r.left+r.width/2,
-    r.top+r.height/2
+  b.classList.add(
+    'selected'
   );
 
+  field.classList.add(
+    'choosing'
+  );
+
+  const r=
+    b.getBoundingClientRect();
+
+  /*
+    TÂM CHÍNH XÁC
+  */
+
+  const x=
+    r.left+
+    r.width/2;
+
+  const y=
+    r.top+
+    r.height/2;
+
+  /*
+    BIG WAVE
+  */
+
+  burst(x,y);
+
+  /*
+    THAY VÌ 1.52 GIÂY:
+    cho người dùng thật sự nhìn
+    thấy wave lan ra.
+  */
+
   later(()=>{
+
     show(d);
-    busy = false;
-  },1520);
+
+    busy=false;
+
+  },2050);
 }
 
+
+/* =========================================================
+   AFTER LETTER
+========================================================= */
+
+function closeReply(){
+
+  const el=
+    $('#afterLetter');
+
+  if(!el)return;
+
+  el.classList.remove(
+    'show'
+  );
+
+  el.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+}
+
+function showAfterLetter(){
+
+  const el=
+    $('#afterLetter');
+
+  if(!el)return;
+
+  el.classList.add(
+    'show'
+  );
+
+  el.setAttribute(
+    'aria-hidden',
+    'false'
+  );
+}
+
+function hideAfterLetter(){
+
+  const el=
+    $('#afterLetter');
+
+  if(!el)return;
+
+  el.classList.remove(
+    'show'
+  );
+
+  el.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+}
+
+
+/* =========================================================
+   CLOSE LETTER
+========================================================= */
+
 function closeLetter(){
-  if(!letter.classList.contains('open')){
+
+  if(
+    !letter.classList.contains(
+      'open'
+    )
+  ){
     return;
   }
 
   clearTyping();
 
-  letter.classList.add('closing');
+  letter.classList.add(
+    'closing'
+  );
 
   haptic(8);
 
   later(()=>{
+
     letter.classList.remove(
       'open',
       'teacher-letter',
@@ -979,10 +1519,12 @@ function closeLetter(){
     );
 
     hideAfterLetter();
+
     closeReply();
+
     closeBonus();
 
-    currentLetterData = null;
+    currentLetterData=null;
 
     letter.setAttribute(
       'aria-hidden',
@@ -993,13 +1535,13 @@ function closeLetter(){
       'choosing'
     );
 
-    burstLayer.innerHTML = '';
+    burstLayer.innerHTML='';
 
     burstLayer.classList.remove(
       'active'
     );
 
-    busy = false;
+    busy=false;
 
     render(
       searchInput.value
@@ -1026,10 +1568,214 @@ function closeLetter(){
   },520);
 }
 
+
+/* =========================================================
+   BONUS
+========================================================= */
+
+function openBonus(){
+
+  if(!currentLetterData)
+    return;
+
+  const modal=
+    $('#bonusModal');
+
+  if(!modal)return;
+
+  $('#bonusText').textContent=
+    bonusFor(
+      currentLetterData
+    );
+
+  $('#bonusTitle').textContent=
+    currentLetterData.teacher
+      ? 'Một điều nhỏ gửi cô.'
+      : 'Một điều nhỏ dành riêng cho bạn.';
+
+  modal.classList.add(
+    'open'
+  );
+
+  modal.setAttribute(
+    'aria-hidden',
+    'false'
+  );
+
+  ensureAudio();
+
+  tone(
+    880,
+    .13,
+    .025,
+    'sine'
+  );
+}
+
+function closeBonus(){
+
+  const m=
+    $('#bonusModal');
+
+  if(!m)return;
+
+  m.classList.remove(
+    'open'
+  );
+
+  m.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+}
+
+
+/* =========================================================
+   REACTION
+========================================================= */
+
+function showReplyToast(text){
+
+  const old=
+    document.querySelector(
+      '.reply-toast'
+    );
+
+  if(old)old.remove();
+
+  const t=
+    document.createElement(
+      'div'
+    );
+
+  t.className=
+    'reply-toast';
+
+  t.textContent=text;
+
+  document.body.appendChild(t);
+
+  requestAnimationFrame(
+    ()=>t.classList.add('show')
+  );
+
+  later(()=>{
+
+    t.classList.remove(
+      'show'
+    );
+
+    later(
+      ()=>t.remove(),
+      360
+    );
+
+  },1700);
+}
+
+function react(kind){
+
+  const msgs={
+    sweet:'♡ Đã nhận một chút dễ thương.',
+    received:'✦ Đã nhận rồi nhé.',
+    thanks:'🌷 10B4 nhận được lời hồi đáp.'
+  };
+
+  const colors={
+    sweet:'♡',
+    received:'✦',
+    thanks:'🌷'
+  };
+
+  const layer=
+    $('#touchTrail');
+
+  if(
+    layer &&
+    !reducedMotion
+  ){
+
+    for(let i=0;i<6;i++){
+
+      const h=
+        document.createElement(
+          'span'
+        );
+
+      h.className=
+        'trail-heart';
+
+      h.textContent=
+        colors[kind];
+
+      h.style.setProperty(
+        '--x',
+        (innerWidth-45)+'px'
+      );
+
+      h.style.setProperty(
+        '--y',
+        (innerHeight-58)+'px'
+      );
+
+      h.style.setProperty(
+        '--dx',
+        (Math.random()*60-30)+'px'
+      );
+
+      h.style.setProperty(
+        '--dy',
+        (-20-
+          Math.random()*45
+        )+'px'
+      );
+
+      h.style.setProperty(
+        '--r',
+        (Math.random()*30-15)+'deg'
+      );
+
+      layer.appendChild(h);
+
+      later(
+        ()=>h.remove(),
+        800
+      );
+    }
+  }
+
+  ensureAudio();
+
+  tone(
+    kind==='received'
+      ? 760
+      : kind==='thanks'
+        ? 620
+        : 900,
+    .14,
+    .028,
+    'sine'
+  );
+
+  haptic(8);
+
+  showReplyToast(
+    msgs[kind]
+  );
+
+  closeReply();
+}
+
+
+/* =========================================================
+   SECRET
+========================================================= */
+
 function findSecret(){
+
   if(secretFound)return;
 
-  secretFound = true;
+  secretFound=true;
 
   ensureAudio();
 
@@ -1042,35 +1788,51 @@ function findSecret(){
 
   haptic(10);
 
-  const toast =
-    document.createElement('div');
+  const toast=
+    document.createElement(
+      'div'
+    );
 
-  toast.className = 'secret-toast';
+  toast.className=
+    'secret-toast';
 
-  toast.textContent =
+  toast.textContent=
     'Bạn tìm thấy một điều mà không phải ai cũng để ý. ♡';
 
-  document.body.appendChild(toast);
+  document.body.appendChild(
+    toast
+  );
 
   requestAnimationFrame(
-    ()=>toast.classList.add('show')
+    ()=>toast.classList.add(
+      'show'
+    )
   );
 
   later(()=>{
-    toast.classList.remove('show');
+
+    toast.classList.remove(
+      'show'
+    );
 
     later(
       ()=>toast.remove(),
       420
     );
+
   },2800);
 
   for(let i=0;i<8;i++){
-    const h =
-      document.createElement('span');
 
-    h.className = 'trail-heart';
-    h.textContent =
+    const h=
+      document.createElement(
+        'span'
+      );
+
+    h.className=
+      'trail-heart';
+
+    h.textContent=
       i%2 ? '♡' : '♥';
 
     h.style.setProperty(
@@ -1085,13 +1847,18 @@ function findSecret(){
 
     h.style.setProperty(
       '--dx',
-      Math.cos(i/8*Math.PI*2)*35+'px'
+      Math.cos(
+        i/8*Math.PI*2
+      )*35+'px'
     );
 
     h.style.setProperty(
       '--dy',
-      (-35-
-        Math.sin(i/8*Math.PI*2)*28
+      (
+        -35-
+        Math.sin(
+          i/8*Math.PI*2
+        )*28
       )+'px'
     );
 
@@ -1100,8 +1867,7 @@ function findSecret(){
       (Math.random()*35-17)+'deg'
     );
 
-    document
-      .querySelector('#touchTrail')
+    $('#touchTrail')
       .appendChild(h);
 
     later(
@@ -1111,34 +1877,75 @@ function findSecret(){
   }
 }
 
-function showFinale(){
-  const f = $('#finale');
 
-  if(!f)return;
+/* =========================================================
+   TRAIL
+========================================================= */
 
-  f.classList.add('open');
+function makeTrail(x,y){
 
-  f.setAttribute(
-    'aria-hidden',
-    'false'
+  const layer=
+    $('#touchTrail');
+
+  if(
+    !layer ||
+    reducedMotion
+  ){
+    return;
+  }
+
+  const h=
+    document.createElement(
+      'span'
+    );
+
+  h.className=
+    'trail-heart';
+
+  h.textContent=
+    Math.random()>.78
+      ? '♥'
+      : '♡';
+
+  h.style.setProperty(
+    '--x',
+    x+'px'
   );
 
-  ensureAudio();
-  openingSound();
-}
+  h.style.setProperty(
+    '--y',
+    y+'px'
+  );
 
-function closeFinale(){
-  const f = $('#finale');
+  h.style.setProperty(
+    '--dx',
+    (Math.random()*26-13)+'px'
+  );
 
-  if(!f)return;
+  h.style.setProperty(
+    '--dy',
+    (-8-
+      Math.random()*24
+    )+'px'
+  );
 
-  f.classList.remove('open');
+  h.style.setProperty(
+    '--r',
+    (Math.random()*40-20)+'deg'
+  );
 
-  f.setAttribute(
-    'aria-hidden',
-    'true'
+  layer.appendChild(h);
+
+  later(
+    ()=>h.remove(),
+    720
   );
 }
+
+
+/* =========================================================
+   EVENTS
+========================================================= */
 
 $('#finaleClose')
   .addEventListener(
@@ -1162,92 +1969,66 @@ $('#bonusModal')
   .addEventListener(
     'click',
     e=>{
-      if(e.target.id==='bonusModal'){
+      if(
+        e.target.id===
+        'bonusModal'
+      ){
         closeBonus();
       }
     }
   );
 
+
+/* Reaction */
+
 document
-  .querySelector('.reaction-row')
+  .querySelector(
+    '.reaction-row'
+  )
   .addEventListener(
     'click',
     e=>{
-      const b =
+
+      const b=
         e.target.closest(
           'button[data-reaction]'
         );
 
       if(b){
-        react(b.dataset.reaction);
+        react(
+          b.dataset.reaction
+        );
       }
     }
   );
 
-function makeTrail(x,y){
-  const layer = $('#touchTrail');
 
-  if(!layer || reducedMotion)return;
-
-  const h =
-    document.createElement('span');
-
-  h.className = 'trail-heart';
-
-  h.textContent =
-    Math.random()>.78
-      ? '♥'
-      : '♡';
-
-  h.style.setProperty(
-    '--x',
-    x+'px'
-  );
-
-  h.style.setProperty(
-    '--y',
-    y+'px'
-  );
-
-  h.style.setProperty(
-    '--dx',
-    (Math.random()*26-13)+'px'
-  );
-
-  h.style.setProperty(
-    '--dy',
-    (-8-Math.random()*24)+'px'
-  );
-
-  h.style.setProperty(
-    '--r',
-    (Math.random()*40-20)+'deg'
-  );
-
-  layer.appendChild(h);
-
-  later(
-    ()=>h.remove(),
-    720
-  );
-}
+/* Pointer trail */
 
 addEventListener(
   'pointermove',
   e=>{
+
     if(
       e.pointerType==='mouse' ||
       e.pointerType==='touch' ||
       e.pointerType==='pen'
     ){
-      const now =
+
+      const now=
         performance.now();
 
-      const interval =
-        mobile() ? 110 : 85;
+      const interval=
+        mobile()
+          ? 110
+          : 85;
 
-      if(now-lastTrailAt>interval){
-        lastTrailAt = now;
+      if(
+        now-lastTrailAt>
+        interval
+      ){
+
+        lastTrailAt=now;
 
         makeTrail(
           e.clientX,
@@ -1255,27 +2036,37 @@ addEventListener(
         );
       }
     }
+
   },
   {passive:true}
 );
+
+
+/* Enter */
 
 $('#enterBtn')
   .addEventListener(
     'click',
     ()=>{
+
       ensureAudio();
 
-      $('#garden').scrollIntoView({
-        behavior:'smooth'
-      });
+      $('#garden')
+        .scrollIntoView({
+          behavior:'smooth'
+        });
     }
   );
+
+
+/* Search */
 
 $('#searchBtn')
   .addEventListener(
     'click',
     ()=>{
-      searchWrap.hidden =
+
+      searchWrap.hidden=
         !searchWrap.hidden;
 
       if(!searchWrap.hidden){
@@ -1284,11 +2075,13 @@ $('#searchBtn')
     }
   );
 
+
 searchInput
   .addEventListener(
     'input',
     ()=>{
-      const q =
+
+      const q=
         searchInput.value
           .trim()
           .toLocaleLowerCase('vi');
@@ -1303,24 +2096,32 @@ searchInput
     }
   );
 
+
+/* Teacher */
+
 $('#teacherBtn')
   .addEventListener(
     'click',
     ()=>{
+
       if(busy)return;
 
-      busy = true;
-      lastScroll = scrollY;
+      busy=true;
+
+      lastScroll=
+        scrollY;
 
       ensureAudio();
+
       openingSound();
-      haptic(16);
+
+      haptic(18);
 
       field.classList.add(
         'choosing'
       );
 
-      const r =
+      const r=
         $('#teacherBtn')
           .getBoundingClientRect();
 
@@ -1330,11 +2131,17 @@ $('#teacherBtn')
       );
 
       later(()=>{
+
         show(teacher);
-        busy = false;
-      },1520);
+
+        busy=false;
+
+      },2050);
     }
   );
+
+
+/* Close */
 
 $('#closeLetter')
   .addEventListener(
@@ -1342,48 +2149,74 @@ $('#closeLetter')
     closeLetter
   );
 
+
 addEventListener(
   'keydown',
   e=>{
+
     if(e.key==='Escape'){
+
       closeReply();
+
       closeBonus();
+
       closeLetter();
     }
   }
 );
 
+
+/* Click outside letter */
+
 letter.addEventListener(
   'click',
   e=>{
+
     if(e.target===letter){
       closeLetter();
     }
   }
 );
 
+
+/* Finale */
+
 $('#finale')
   .addEventListener(
     'click',
     e=>{
-      if(e.target.id==='finale'){
+
+      if(
+        e.target.id===
+        'finale'
+      ){
         closeFinale();
       }
     }
   );
 
+
+/* Resize */
+
 addEventListener(
   'resize',
   ()=>{
+
     clearTimeout(
       window.__resize
     );
 
-    window.__resize =
+    window.__resize=
       setTimeout(()=>{
+
         ambientHearts();
 
-        if(!letter.classList.contains('open')){
+        if(
+          !letter.classList.contains(
+            'open'
+          )
+        ){
+
           render(
             searchInput.value
               ? girls.filter(x=>
@@ -1398,9 +2231,17 @@ addEventListener(
               : girls
           );
         }
+
       },180);
   }
 );
 
+
+/* =========================================================
+   START
+========================================================= */
+
 ambientHearts();
+
 render(girls);
+```
