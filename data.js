@@ -69,7 +69,7 @@ const girls = [
       "Mong bạn gặp được thật nhiều điều tử tế và những người khiến bạn cảm thấy thoải mái khi là chính mình.",
       "Mong bạn có thật nhiều ngày được làm điều mình thích, gặp người mình quý và cười thật nhiều vì những chuyện chẳng đâu vào đâu. Chúc mọi thứ bạn đang chờ đợi cứ từ từ đến, không cần vội nhưng nhất định phải đến thật vui. Và nếu có ngày hơi mệt thì cũng không sao, nghỉ một chút rồi lại vui tiếp nha ♡"
     ],
-    "sign": "Từ 10B4, với một lời chúc nhỏ ♡"
+    "sign": "Từ 10B4, một lời chúc nhỏ ♡"
   },
   {
     "id": "student-07",
@@ -117,7 +117,7 @@ const girls = [
       "Mong mỗi ngày đến lớp đều có một chuyện nhỏ khiến bạn thấy vui, dù chỉ là một câu nói hay một trận cười rất vô tri.",
       "Chúc bạn luôn gặp những người khiến mình thấy thoải mái, có những buổi học vui hơn một chút và những điều đang mong chờ cũng dần thành hiện thực. Cứ vui theo cách của mình nha, như thế đã đủ dễ thương rồi ♡"
     ],
-    "sign": "Từ 10B4, với một lời chúc nhỏ ♡"
+    "sign": "Từ 10B4, một lời chúc nhỏ ♡"
   },
   {
     "id": "student-11",
@@ -297,7 +297,7 @@ const girls = [
       "Hy vọng những giờ học, những lần nói chuyện và cả mấy chuyện linh tinh ở lớp sẽ góp lại thành những kỷ niệm thật vui.",
       "Chúc bạn 20/10 thật vui, học hành ngày càng ổn và những ngày đi học cũng có thật nhiều chuyện để cười. Mong những điều nhỏ xíu làm bạn vui cứ xuất hiện đều đều, để mỗi ngày trôi qua vẫn có một chút gì đó thật đáng yêu. Mong mọi thứ cứ từ từ tốt lên, và mỗi ngày đều có một điều nhỏ xíu làm bạn thấy vui nhaaa ♡"
     ],
-    "sign": "Từ 10B4, với một lời chúc nhỏ ♡"
+    "sign": "Từ 10B4, một lời chúc nhỏ ♡"
   },
   {
     "id": "student-26",
