@@ -145,28 +145,34 @@ function burst(x,y){
   // not stop around the tapped heart. Diameter is based on the farthest corner.
   const farX=Math.max(x,innerWidth-x);
   const farY=Math.max(y,innerHeight-y);
-  const wideDiameter=Math.hypot(farX,farY)*2.18;
-  const ringCount=mobile()?7:8;
-  for(let i=0;i<ringCount;i++){
-    const ring=document.createElement('div');
-    ring.className='water-ripple';
-    ring.style.setProperty('--ring-delay',(i*105)+'ms');
-    const fraction=i===0?.16:(.26+i*.115);
-    ring.style.setProperty('--ring-size',Math.max(62,wideDiameter*fraction)+'px');
-    frag.appendChild(ring);
-  }
+  const wideDiameter=Math.hypot(farX,farY)*5.2;
+const ringCount=mobile()?9.8;
 
+for(let i=0;i<ringCount;i++){
+  const ring=document.createElement('div');
+  ring.className='water-ripple';
+  ring.style.setProperty('--ring-delay',(i*85)+'ms');
+
+  const fraction=i===0?.24:(.34+i*.14);
+
+  ring.style.setProperty(
+    '--ring-size',
+    Math.max(167,wideDiameter*fraction)+'px'
+  );
+
+  frag.appendChild(ring);
+}
   // A handful of tiny bubbles rise out of the touch point.
-  const bubbles=mobile()?10:14;
+  const bubbles=mobile()?20:25;
   for(let i=0;i<bubbles;i++){
     const b=document.createElement('span');
     b.className='water-bubble';
     const a=Math.random()*Math.PI*2;
-    const dist=24+Math.random()*(mobile()?92:145);
+    const dist=24+Math.random()*(mobile()?200:260);
     b.style.setProperty('--bx',Math.cos(a)*dist+'px');
     b.style.setProperty('--by',Math.sin(a)*dist-24-Math.random()*34+'px');
     b.style.setProperty('--bs',(3+Math.random()*(mobile()?7:10))+'px');
-    b.style.setProperty('--bd',(Math.random()*180)+'ms');
+    b.style.setProperty('--bd',(Math.random()*200)+'ms');
     frag.appendChild(b);
   }
 
@@ -176,14 +182,14 @@ function burst(x,y){
     const h=document.createElement('span');
     h.className='burst-heart soft-heart';
     h.textContent=i%5===0?'♥':'♡';
-    const a=Math.PI*2*(i/hearts)+(Math.random()-.5)*.35;
+    const a=Math.PI*2*(i/hearts)+(Math.random()-.6)*.36;
     const dist=(mobile()?42:58)+Math.random()*(mobile()?100:170);
     h.style.setProperty('--tx',Math.cos(a)*dist+'px');
     h.style.setProperty('--ty',Math.sin(a)*dist+'px');
     h.style.setProperty('--rot',(Math.random()*38-19)+'deg');
     h.style.setProperty('--size',(mobile()?7:8)+Math.random()*(mobile()?8:11)+'px');
-    h.style.setProperty('--delay',(420+Math.random()*240)+'ms');
-    h.style.setProperty('--dur',(1.25+Math.random()*.45)+'s');
+    h.style.setProperty('--delay',(420+Math.random()*250)+'ms');
+    h.style.setProperty('--dur',(1.25+Math.random()*.50)+'s');
     frag.appendChild(h);
   }
 
@@ -191,7 +197,7 @@ function burst(x,y){
   later(()=>{
     burstLayer.classList.remove('active','water-mode');
     burstLayer.innerHTML='';
-  },2200);
+  },2500);
 }
 function clearTyping(){
   if(typingRAF){cancelAnimationFrame(typingRAF);typingRAF=null;}
@@ -199,7 +205,7 @@ function clearTyping(){
   document.querySelectorAll('.letter-progress i').forEach(x=>x.style.width='0%');
 }
 
-// A deliberately cinematic 20-second reveal: still genuinely character-by-character,
+// A deliberately cinematic 19-second reveal: still genuinely character-by-character,
 // but the total duration stays predictable on phones instead of depending on frame rate.
 function typeLetter(d){
   greeting.textContent=''; body.innerHTML=''; sign.classList.remove('show');
