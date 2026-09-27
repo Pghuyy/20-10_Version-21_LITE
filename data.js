@@ -53,7 +53,7 @@ const girls = [
     "subject": "Một lá thư nhỏ cho bạn",
     "greeting": "Gửi Đinh Thùy Chi,",
     "paragraphs": [
-      "Cảm ơn Chi nhaaa ♡",
+      "Cảm ơn Chii nhaaa ♡",
       "Hy vọng năm học này sẽ có nhiều khoảnh khắc khiến bạn phải bật cười khi nhớ lại, nhất là những chuyện rất bình thường ở lớp.",
       "Chúc bạn luôn có đủ năng lượng cho những điều mình thích, đủ may mắn cho những chuyện bất ngờ và thật nhiều khoảnh khắc đáng nhớ. Mong sau này nhìn lại những ngày này, bạn vẫn có thể mỉm cười vì đã từng vui như thế. Mong năm học này để lại cho bạn thật nhiều kỷ niệm vui, đủ để lâu lâu nhớ lại vẫn bật cười nhaaa."
     ],
