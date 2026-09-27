@@ -67,7 +67,7 @@ function showReplyToast(text){
   later(()=>{t.classList.remove('show');later(()=>t.remove(),360)},1700);
 }
 function react(kind){
-  const msgs={sweet:'♡ Đã nhận một chút dễ thương.',received:'✦ Đã nhận rồi nhé.',thanks:'🌷 10B4 nhận được lời hồi đáp.'};
+  const msgs={sweet:'♡ Đã nhận một chút dễ thươnggg.',received:'✦ Đã nhận rồi nhaaaaaaa.',thanks:'🌷 10B4 nhận được lời hồi đáp-)).'};
   const colors={sweet:'♡',received:'✦',thanks:'🌷'};
   const layer=$('#touchTrail');
   if(layer && !reducedMotion){for(let i=0;i<6;i++){const h=document.createElement('span');h.className='trail-heart';h.textContent=colors[kind];h.style.setProperty('--x',(innerWidth-45)+'px');h.style.setProperty('--y',(innerHeight-58)+'px');h.style.setProperty('--dx',(Math.random()*60-30)+'px');h.style.setProperty('--dy',(-20-Math.random()*45)+'px');h.style.setProperty('--r',(Math.random()*30-15)+'deg');layer.appendChild(h);later(()=>h.remove(),800)}}
