@@ -3,7 +3,7 @@ const girls = [
     "id": "student-01",
     "name": "Lê Phạm Khánh An",
     "subject": "Một chút vui vẻ gửi bạn",
-    "greeting": "Gửi Lê Phạm Khánh An,",
+    "greeting": "Gửi Khánh An,",
     "paragraphs": [
       "Cảm ơn Annn nhaaa ♡",
       "Hy vọng những giờ học, những lần nói chuyện và cả mấy chuyện linh tinh ở lớp sẽ góp lại thành những kỷ niệm thật vui.",
